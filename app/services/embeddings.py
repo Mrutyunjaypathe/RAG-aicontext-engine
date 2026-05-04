@@ -60,12 +60,12 @@ def _get_embedder():
             raise
     else:
         try:
-            from langchain_community.embeddings import HuggingFaceEmbeddings
+            from langchain_huggingface import HuggingFaceEmbeddings
             _embedder = HuggingFaceEmbeddings(
                 model_name="sentence-transformers/all-MiniLM-L6-v2",
                 model_kwargs={"device": "cpu"}
             )
-            logger.info("Initialized local HuggingFace embeddings (CPU)")
+            logger.info("Initialized modern HuggingFace embeddings (CPU)")
         except Exception as e:
             logger.error(f"Failed to initialize HuggingFace embeddings: {e}")
             raise
