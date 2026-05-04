@@ -60,9 +60,9 @@ def _get_embedder():
             raise
     else:
         try:
-            from langchain_community.embeddings import OpenAIEmbeddings
-            _embedder = OpenAIEmbeddings(openai_api_key=settings.openai_api_key)
-            logger.info("Initialized OpenAI embeddings")
+            from langchain_openai import OpenAIEmbeddings
+            _embedder = OpenAIEmbeddings(api_key=settings.openai_api_key)
+            logger.info("Initialized modern OpenAI embeddings")
         except Exception as e:
             logger.error(f"Failed to initialize OpenAI embeddings: {e}")
             raise
