@@ -77,13 +77,13 @@ def _get_llm():
             raise
     else:
         try:
-            from langchain_community.chat_models import ChatOpenAI
+            from langchain_openai import ChatOpenAI
             _llm_client = ChatOpenAI(
                 model=settings.llm_model or "gpt-3.5-turbo",
-                openai_api_key=settings.openai_api_key,
+                api_key=settings.openai_api_key,
                 temperature=0.1,
             )
-            logger.info("Initialized OpenAI LLM")
+            logger.info("Initialized modern OpenAI LLM")
         except Exception as e:
             logger.error(f"Failed to initialize OpenAI LLM: {e}")
             raise

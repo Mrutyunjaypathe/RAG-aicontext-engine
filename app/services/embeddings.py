@@ -60,11 +60,14 @@ def _get_embedder():
             raise
     else:
         try:
-            from langchain_openai import OpenAIEmbeddings
-            _embedder = OpenAIEmbeddings(api_key=settings.openai_api_key)
-            logger.info("Initialized modern OpenAI embeddings")
+            from langchain_community.embeddings import HuggingFaceEmbeddings
+            _embedder = HuggingFaceEmbeddings(
+                model_name="sentence-transformers/all-MiniLM-L6-v2",
+                model_kwargs={"device": "cpu"}
+            )
+            logger.info("Initialized local HuggingFace embeddings (CPU)")
         except Exception as e:
-            logger.error(f"Failed to initialize OpenAI embeddings: {e}")
+            logger.error(f"Failed to initialize HuggingFace embeddings: {e}")
             raise
 
     return _embedder
