@@ -105,7 +105,7 @@ def embed_texts(texts: List[str]) -> List[List[float]]:
                 # Using the NEW SDK client
                 response = client.models.embed_content(
                     model=settings.embedding_model,
-                    contents=text,
+                    contents=[text],
                     config={
                         'task_type': 'RETRIEVAL_DOCUMENT'
                     }
@@ -142,7 +142,7 @@ def embed_query(query: str) -> List[float]:
         client = _get_embedder()
         response = client.models.embed_content(
             model=settings.embedding_model,
-            contents=query,
+            contents=[query],
             config={
                 'task_type': 'RETRIEVAL_QUERY'
             }
