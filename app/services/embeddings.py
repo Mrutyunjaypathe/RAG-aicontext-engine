@@ -49,13 +49,11 @@ def _get_embedder():
 
     if settings.llm_provider == "gemini":
         try:
-            import google.generativeai as genai
-            genai.configure(api_key=settings.gemini_api_key)
-            # We'll use the genai library directly in the embed_texts function
-            _embedder = "google-genai" 
-            logger.info("Initialized Google Generative AI embeddings (Direct SDK)")
+            from google import genai
+            _embedder = genai.Client(api_key=settings.gemini_api_key)
+            logger.info("Initialized New Google GenAI SDK Client")
         except Exception as e:
-            logger.error(f"Failed to initialize Gemini embeddings: {e}")
+            logger.error(f"Failed to initialize New Gemini SDK: {e}")
             raise
     else:
         try:
@@ -98,18 +96,20 @@ def embed_texts(texts: List[str]) -> List[List[float]]:
         all_embeddings = []
         
         if settings.llm_provider == "gemini":
-            import google.generativeai as genai
             import time
+            client = _get_embedder()
             for i, text in enumerate(uncached_texts):
-                # Using direct SDK call with v1 API
-                response = genai.embed_content(
+                # Using the NEW SDK client
+                response = client.models.embed_content(
                     model=settings.embedding_model,
-                    content=text,
-                    task_type="retrieval_document"
+                    contents=text,
+                    config={
+                        'task_type': 'RETRIEVAL_DOCUMENT'
+                    }
                 )
-                all_embeddings.append(response['embedding'])
+                all_embeddings.append(response.embeddings[0].values)
                 if i < len(uncached_texts) - 1:
-                    time.sleep(1)  # Avoid rate limits
+                    time.sleep(1)
         else:
             batch_size = 100
             for start in range(0, len(uncached_texts), batch_size):
@@ -136,13 +136,15 @@ def embed_query(query: str) -> List[float]:
         return _cache[key]
 
     if settings.llm_provider == "gemini":
-        import google.generativeai as genai
-        response = genai.embed_content(
+        client = _get_embedder()
+        response = client.models.embed_content(
             model=settings.embedding_model,
-            content=query,
-            task_type="retrieval_query"
+            contents=query,
+            config={
+                'task_type': 'RETRIEVAL_QUERY'
+            }
         )
-        embedding = response['embedding']
+        embedding = response.embeddings[0].values
     else:
         embedder = _get_embedder()
         embedding = embedder.embed_query(query)
