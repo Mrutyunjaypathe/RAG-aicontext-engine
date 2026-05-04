@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🧠 AI Knowledge System</title>
+  <meta name="description" content="Upload your documents and query them with AI. Source-backed answers with full observability." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ── Background Orbs ───────────────────────────────────────────── -->
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+  <div class="bg-orb orb-3"></div>
+
+  <!-- ── Header ────────────────────────────────────────────────────── -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon">🧠</span>
+        <div>
+          <span class="logo-title">AI Knowledge System</span>
+          <span class="logo-sub">RAG + Observability</span>
+        </div>
+      </div>
+      <nav class="nav-tabs">
+        <button class="nav-tab active" id="tab-chat" onclick="switchTab('chat')">
+          <span>💬</span> Chat
+        </button>
+        <button class="nav-tab" id="tab-docs" onclick="switchTab('docs')">
+          <span>📄</span> Documents
+        </button>
+        <button class="nav-tab" id="tab-metrics" onclick="switchTab('metrics')">
+          <span>📊</span> Metrics
+        </button>
+      </nav>
+      <div class="status-badge" id="status-badge">
+        <span class="status-dot"></span>
+        <span id="status-text">Connecting...</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Main Content ───────────────────────────────────────────────── -->
+  <main class="main">
+
+    <!-- ════════════ CHAT TAB ════════════ -->
+    <section class="tab-panel active" id="panel-chat">
+      <div class="chat-layout">
+
+        <!-- Sidebar: Upload -->
+        <aside class="sidebar">
+          <div class="card upload-card">
+            <h2 class="card-title"><span>📁</span> Upload Document</h2>
+            <p class="card-sub">PDF, TXT, or DOCX — up to 50 MB</p>
+
+            <div class="drop-zone" id="drop-zone"
+                 ondragover="handleDragOver(event)"
+                 ondragleave="handleDragLeave(event)"
+                 ondrop="handleDrop(event)">
+              <div class="drop-icon">☁️</div>
+              <p class="drop-text">Drag & drop your file here</p>
+              <p class="drop-or">or</p>
+              <label class="btn btn-outline" for="file-input">Browse Files</label>
+              <input type="file" id="file-input" accept=".pdf,.txt,.docx" hidden
+                     onchange="handleFileSelect(event)" />
+            </div>
+
+            <div class="upload-progress hidden" id="upload-progress">
+              <div class="progress-bar-track">
+                <div class="progress-bar-fill" id="progress-fill"></div>
+              </div>
+              <span class="progress-label" id="progress-label">Uploading...</span>
+            </div>
+
+            <div class="upload-result hidden" id="upload-result"></div>
+          </div>
+
+          <!-- Loaded Documents mini-list -->
+          <div class="card docs-mini-card">
+            <h3 class="card-title"><span>🗂️</span> Knowledge Base</h3>
+            <ul class="docs-mini-list" id="docs-mini-list">
+              <li class="empty-state">No documents yet</li>
+            </ul>
+          </div>
+        </aside>
+
+        <!-- Chat Area -->
+        <div class="chat-area">
+          <div class="chat-messages" id="chat-messages">
+            <!-- Welcome Message -->
+            <div class="message message-ai welcome-msg">
+              <div class="msg-avatar">🧠</div>
+              <div class="msg-bubble">
+                <p class="msg-text">
+                  Hello! I'm your AI Knowledge Assistant. Upload a document on the left,
+                  then ask me anything about it. Every answer is grounded in your documents
+                  with full source citations.
+                </p>
+                <div class="example-questions">
+                  <p class="example-label">Try asking:</p>
+                  <button class="example-btn" onclick="useExample(this)">What are the main topics in this document?</button>
+                  <button class="example-btn" onclick="useExample(this)">Summarize the key findings.</button>
+                  <button class="example-btn" onclick="useExample(this)">What conclusions are drawn?</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Input Area -->
+          <div class="chat-input-area">
+            <div class="input-wrapper">
+              <textarea
+                id="chat-input"
+                class="chat-input"
+                placeholder="Ask anything about your documents..."
+                rows="1"
+                onkeydown="handleKeydown(event)"
+                oninput="autoResize(this)"
+              ></textarea>
+              <button class="send-btn" id="send-btn" onclick="sendQuery()" title="Send (Enter)">
+                <span class="send-icon">➤</span>
+              </button>
+            </div>
+            <p class="input-hint">Press <kbd>Enter</kbd> to send · <kbd>Shift+Enter</kbd> for new line</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════ DOCUMENTS TAB ════════════ -->
+    <section class="tab-panel" id="panel-docs">
+      <div class="panel-inner">
+        <div class="panel-header">
+          <h2>📄 Document Library</h2>
+          <p>All documents in your knowledge base</p>
+        </div>
+        <div class="docs-grid" id="docs-grid">
+          <div class="empty-card">
+            <div class="empty-icon">📂</div>
+            <p>No documents uploaded yet.</p>
+            <p class="empty-sub">Go to the Chat tab and upload a document to get started.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════ METRICS TAB ════════════ -->
+    <section class="tab-panel" id="panel-metrics">
+      <div class="panel-inner">
+        <div class="panel-header">
+          <h2>📊 Observability Dashboard</h2>
+          <p>Real-time system performance and usage metrics</p>
+          <button class="btn btn-outline" onclick="loadMetrics()">🔄 Refresh</button>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="metrics-grid" id="metrics-grid">
+          <div class="metric-card" id="m-queries">
+            <div class="metric-icon">💬</div>
+            <div class="metric-value" id="mv-queries">—</div>
+            <div class="metric-label">Total Queries</div>
+          </div>
+          <div class="metric-card" id="m-docs">
+            <div class="metric-icon">📄</div>
+            <div class="metric-value" id="mv-docs">—</div>
+            <div class="metric-label">Documents</div>
+          </div>
+          <div class="metric-card" id="m-chunks">
+            <div class="metric-icon">🧩</div>
+            <div class="metric-value" id="mv-chunks">—</div>
+            <div class="metric-label">Total Chunks</div>
+          </div>
+          <div class="metric-card" id="m-tokens">
+            <div class="metric-icon">🔢</div>
+            <div class="metric-value" id="mv-tokens">—</div>
+            <div class="metric-label">Tokens Used</div>
+          </div>
+          <div class="metric-card" id="m-cost">
+            <div class="metric-icon">💰</div>
+            <div class="metric-value" id="mv-cost">—</div>
+            <div class="metric-label">Est. Cost (USD)</div>
+          </div>
+          <div class="metric-card" id="m-uptime">
+            <div class="metric-icon">⏱️</div>
+            <div class="metric-value" id="mv-uptime">—</div>
+            <div class="metric-label">Uptime</div>
+          </div>
+        </div>
+
+        <!-- Latency Stats -->
+        <div class="card latency-card">
+          <h3 class="card-title"><span>⚡</span> Latency Statistics</h3>
+          <div class="latency-bars" id="latency-bars">
+            <div class="lat-row">
+              <span class="lat-label">P50 (Median)</span>
+              <div class="lat-bar-track"><div class="lat-bar-fill" id="lb-p50" style="width:0%"></div></div>
+              <span class="lat-value" id="lv-p50">—</span>
+            </div>
+            <div class="lat-row">
+              <span class="lat-label">P95</span>
+              <div class="lat-bar-track"><div class="lat-bar-fill p95" id="lb-p95" style="width:0%"></div></div>
+              <span class="lat-value" id="lv-p95">—</span>
+            </div>
+            <div class="lat-row">
+              <span class="lat-label">P99</span>
+              <div class="lat-bar-track"><div class="lat-bar-fill p99" id="lb-p99" style="width:0%"></div></div>
+              <span class="lat-value" id="lv-p99">—</span>
+            </div>
+            <div class="lat-row">
+              <span class="lat-label">Average</span>
+              <div class="lat-bar-track"><div class="lat-bar-fill avg" id="lb-avg" style="width:0%"></div></div>
+              <span class="lat-value" id="lv-avg">—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Queries Table -->
+        <div class="card">
+          <h3 class="card-title"><span>🕐</span> Recent Queries</h3>
+          <div class="table-wrapper">
+            <table class="queries-table" id="queries-table">
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Question</th>
+                  <th>Sources</th>
+                  <th>Latency</th>
+                  <th>Tokens</th>
+                </tr>
+              </thead>
+              <tbody id="queries-tbody">
+                <tr><td colspan="5" class="empty-row">No queries yet</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <!-- ── Toast Notifications ───────────────────────────────────────── -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

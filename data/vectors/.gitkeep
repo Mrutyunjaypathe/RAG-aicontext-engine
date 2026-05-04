@@ -1,0 +1,3 @@
+# This directory stores FAISS vector indexes and embedding cache.
+# Files here are auto-generated — do not edit manually.
+# Add to .gitignore if you do not want to commit vector data.

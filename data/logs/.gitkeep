@@ -1,0 +1,2 @@
+# Observability logs are written here (app.log, query_log.jsonl, metrics.json).
+# Auto-generated at runtime.
