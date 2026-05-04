@@ -12,8 +12,8 @@ class Settings(BaseSettings):
     gemini_api_key: str = ""
     openai_api_key: str = ""
     llm_provider: Literal["gemini", "openai"] = "gemini"
-    llm_model: str = "gemini-1.5-flash"
-    embedding_model: str = "models/text-embedding-004"
+    llm_model: str = "gemini-2.5-flash"
+    embedding_model: str = "models/gemini-embedding-2"
 
     # ── RAG ──────────────────────────────────────────────────────
     chunk_size: int = 1000
