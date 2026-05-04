@@ -49,14 +49,14 @@ def _get_embedder():
 
     if settings.llm_provider == "gemini":
         try:
-            from google import genai
-            _embedder = genai.Client(
-                api_key=settings.gemini_api_key,
-                http_options={'api_version': 'v1'}
+            from langchain_google_genai import GoogleGenerativeAIEmbeddings
+            _embedder = GoogleGenerativeAIEmbeddings(
+                model=settings.embedding_model,
+                google_api_key=settings.gemini_api_key,
             )
-            logger.info("Initialized New Google GenAI SDK Client")
+            logger.info("Initialized LangChain Google Generative AI embeddings")
         except Exception as e:
-            logger.error(f"Failed to initialize New Gemini SDK: {e}")
+            logger.error(f"Failed to initialize Gemini embeddings: {e}")
             raise
     else:
         try:
@@ -99,20 +99,8 @@ def embed_texts(texts: List[str]) -> List[List[float]]:
         all_embeddings = []
         
         if settings.llm_provider == "gemini":
-            import time
-            client = _get_embedder()
-            for i, text in enumerate(uncached_texts):
-                # Using the NEW SDK client
-                response = client.models.embed_content(
-                    model=settings.embedding_model,
-                    contents=[text],
-                    config={
-                        'task_type': 'RETRIEVAL_DOCUMENT'
-                    }
-                )
-                all_embeddings.append(response.embeddings[0].values)
-                if i < len(uncached_texts) - 1:
-                    time.sleep(1)
+            # Using standard LangChain embed_documents for multiple strings
+            all_embeddings.extend(embedder.embed_documents(uncached_texts))
         else:
             batch_size = 100
             for start in range(0, len(uncached_texts), batch_size):
@@ -138,19 +126,8 @@ def embed_query(query: str) -> List[float]:
     if key in _cache:
         return _cache[key]
 
-    if settings.llm_provider == "gemini":
-        client = _get_embedder()
-        response = client.models.embed_content(
-            model=settings.embedding_model,
-            contents=[query],
-            config={
-                'task_type': 'RETRIEVAL_QUERY'
-            }
-        )
-        embedding = response.embeddings[0].values
-    else:
-        embedder = _get_embedder()
-        embedding = embedder.embed_query(query)
+    embedder = _get_embedder()
+    embedding = embedder.embed_query(query)
     _cache[key] = embedding
     _save_cache()
     return embedding
