@@ -53,6 +53,7 @@ def _get_embedder():
             _embedder = GoogleGenerativeAIEmbeddings(
                 model=settings.embedding_model,
                 google_api_key=settings.gemini_api_key,
+                version="v1",
             )
             logger.info("Initialized Google Generative AI embeddings")
         except Exception as e:
@@ -93,30 +94,29 @@ def embed_texts(texts: List[str]) -> List[List[float]]:
             uncached_indices.append(i)
             uncached_texts.append(text)
 
-        # Embed uncached texts
-        if uncached_texts:
-            logger.info(f"Embedding {len(uncached_texts)} new text chunks...")
-            all_embeddings = []
-            
-            if settings.llm_provider == "gemini":
-                # Workaround for langchain-google-genai 4.2.2 bug where embed_documents treats 
-                # a list of strings as a single document's multi-part content.
-                import time
-                for i, text in enumerate(uncached_texts):
-                    all_embeddings.append(embedder.embed_query(text))
-                    if i < len(uncached_texts) - 1:
-                        time.sleep(2)  # Avoid 15 RPM rate limit on free tier
-            else:
-                batch_size = 100
-                for start in range(0, len(uncached_texts), batch_size):
-                    batch = uncached_texts[start : start + batch_size]
-                    all_embeddings.extend(embedder.embed_documents(batch))
+    # Embed uncached texts
+    if uncached_texts:
+        logger.info(f"Embedding {len(uncached_texts)} new text chunks...")
+        all_embeddings = []
+        
+        if settings.llm_provider == "gemini":
+            import time
+            for i, text in enumerate(uncached_texts):
+                # Using embed_query directly to avoid batchEmbedContents 404s
+                all_embeddings.append(embedder.embed_query(text))
+                if i < len(uncached_texts) - 1:
+                    time.sleep(1)  # Avoid rate limits
+        else:
+            batch_size = 100
+            for start in range(0, len(uncached_texts), batch_size):
+                batch = uncached_texts[start : start + batch_size]
+                all_embeddings.extend(embedder.embed_documents(batch))
 
-            # Store in cache and results
-            for idx, embedding in zip(uncached_indices, all_embeddings):
-                key = _cache_key(texts[idx])
-                _cache[key] = embedding
-                results[idx] = embedding
+        # Store in cache and results
+        for idx, embedding in zip(uncached_indices, all_embeddings):
+            key = _cache_key(texts[idx])
+            _cache[key] = embedding
+            results[idx] = embedding
 
         _save_cache()
         logger.info(f"Cached {len(uncached_texts)} new embeddings")
