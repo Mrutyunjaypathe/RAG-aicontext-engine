@@ -49,13 +49,11 @@ def _get_embedder():
 
     if settings.llm_provider == "gemini":
         try:
-            from langchain_google_genai import GoogleGenerativeAIEmbeddings
-            _embedder = GoogleGenerativeAIEmbeddings(
-                model=settings.embedding_model,
-                google_api_key=settings.gemini_api_key,
-                version="v1",
-            )
-            logger.info("Initialized Google Generative AI embeddings")
+            import google.generativeai as genai
+            genai.configure(api_key=settings.gemini_api_key)
+            # We'll use the genai library directly in the embed_texts function
+            _embedder = "google-genai" 
+            logger.info("Initialized Google Generative AI embeddings (Direct SDK)")
         except Exception as e:
             logger.error(f"Failed to initialize Gemini embeddings: {e}")
             raise
@@ -100,10 +98,16 @@ def embed_texts(texts: List[str]) -> List[List[float]]:
         all_embeddings = []
         
         if settings.llm_provider == "gemini":
+            import google.generativeai as genai
             import time
             for i, text in enumerate(uncached_texts):
-                # Using embed_query directly to avoid batchEmbedContents 404s
-                all_embeddings.append(embedder.embed_query(text))
+                # Using direct SDK call with v1 API
+                response = genai.embed_content(
+                    model=settings.embedding_model,
+                    content=text,
+                    task_type="retrieval_document"
+                )
+                all_embeddings.append(response['embedding'])
                 if i < len(uncached_texts) - 1:
                     time.sleep(1)  # Avoid rate limits
         else:
@@ -131,8 +135,17 @@ def embed_query(query: str) -> List[float]:
     if key in _cache:
         return _cache[key]
 
-    embedder = _get_embedder()
-    embedding = embedder.embed_query(query)
+    if settings.llm_provider == "gemini":
+        import google.generativeai as genai
+        response = genai.embed_content(
+            model=settings.embedding_model,
+            content=query,
+            task_type="retrieval_query"
+        )
+        embedding = response['embedding']
+    else:
+        embedder = _get_embedder()
+        embedding = embedder.embed_query(query)
     _cache[key] = embedding
     _save_cache()
     return embedding
