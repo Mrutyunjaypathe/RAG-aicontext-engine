@@ -50,7 +50,10 @@ def _get_embedder():
     if settings.llm_provider == "gemini":
         try:
             from google import genai
-            _embedder = genai.Client(api_key=settings.gemini_api_key)
+            _embedder = genai.Client(
+                api_key=settings.gemini_api_key,
+                http_options={'api_version': 'v1'}
+            )
             logger.info("Initialized New Google GenAI SDK Client")
         except Exception as e:
             logger.error(f"Failed to initialize New Gemini SDK: {e}")
