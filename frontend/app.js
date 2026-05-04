@@ -2,7 +2,7 @@
    AI Knowledge System — Frontend Logic
    ============================================================ */
 
-const API = 'http://localhost:8000';
+const API = '';
 
 // ── State ─────────────────────────────────────────────────────────
 let isQuerying = false;
