@@ -27,6 +27,9 @@
           <span class="logo-sub">RAG + Observability</span>
         </div>
       </div>
+      <button class="mobile-toggle" id="mobile-toggle" onclick="toggleSidebar()" aria-label="Toggle Sidebar">
+        <span>📂</span>
+      </button>
       <nav class="nav-tabs">
         <button class="nav-tab active" id="tab-chat" onclick="switchTab('chat')">
           <span>💬</span> Chat
@@ -88,6 +91,9 @@
             </ul>
           </div>
         </aside>
+
+        <!-- Sidebar Overlay (moved inside for better stacking) -->
+        <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
 
         <!-- Chat Area -->
         <div class="chat-area">
